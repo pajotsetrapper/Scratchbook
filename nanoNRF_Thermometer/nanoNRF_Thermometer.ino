@@ -44,10 +44,12 @@ MyMessage temperature_msg(CHILD_ID_TEMP, V_TEMP);
 unsigned long latest_update_timestamp = 0;
 float temp=NAN;
 
-int getTemperature(){
-  int temp;
+float getTemperature(){
+  float temp;
   ds18b20.requestTemperatures();
-  temp = round(ds18b20.getTempCByIndex(0));
+  //temp = round(ds18b20.getTempCByIndex(0));
+  temp = ds18b20.getTempCByIndex(0);
+  Serial.print("temperature: "); Serial.println(temp);
   return (temp);
 }
 
@@ -58,8 +60,8 @@ void setup()
   display.begin();
   display.setBacklight(100);  
   display.clear();
-  display.setCursor(0,2);
-  display.print(getTemperature());
+  display.setCursor(0,0);
+  display.print(getTemperature(),1);
 }
 
 void presentation()
@@ -89,8 +91,8 @@ void loop()
     latest_update_timestamp = millis();    
     temp = getTemperature();
     display.clear();
-    display.setCursor(0,2);
-    display.print(getTemperature());
+    display.setCursor(0,0);
+    display.print(round(getTemperature()));
     sendMySensorsMsgWithRetries(temperature_msg.set(temp, 1), SEND_ATTEMPTS);
   }
 }
