@@ -4,9 +4,8 @@
 #define DFPLAY_RX D1
 #define DFPLAY_TX D2
 
-#define MY_MAC_ADDRESS 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x02
-
-
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+#include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 #include <SoftwareSerial.h>
 #include <DFMiniMp3.h>                //DFPlayer mini https://github.com/Makuna/DFMiniMp3/wiki
 
@@ -90,16 +89,26 @@ int changeVolume(String command) {
 }
 
 void setup(){
-  Serial.begin(115200);
 
-  byte mac[] = {
-  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
-  };
+  bool res;
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+  WiFiManager wm;
+  //wm.resetSettings(); reset settings - wipe stored credentials for testing (stored by esp library)
+  res = wm.autoConnect(); // auto generated AP name from chipid, no pwd - connect to stored Wifi SSID
+                          // Start config portal if it cannot connect
+  if(!res) {
+      Serial.println("Failed to connect to preconfigured Wifi");
+      ESP.restart();
+  }
+  else {
+      //if you get here you have connected to the WiFi
+      Serial.println(WiFi.localIP());
+  }
    
   dfplayer.begin();  
   uint16_t volume = dfplayer.getVolume();
-  Serial.print("volume ");
-  Serial.println(volume);
+  Serial.print("volume "); Serial.println(volume);
   dfplayer.setVolume(26);  
   dfplayer.playMp3FolderTrack(1);
 }
