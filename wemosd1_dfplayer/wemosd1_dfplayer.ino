@@ -4,9 +4,6 @@
 #define DFPLAY_RX D1
 #define DFPLAY_TX D2
 
-#define MY_MAC_ADDRESS 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x02
-
-
 #include <SoftwareSerial.h>
 #include <DFMiniMp3.h>                //DFPlayer mini https://github.com/Makuna/DFMiniMp3/wiki
 
