@@ -5,7 +5,7 @@
 #define DFPLAY_TX D2
 
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
-#include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
+// #include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 #include <SoftwareSerial.h>
 #include <DFMiniMp3.h>                //DFPlayer mini https://github.com/Makuna/DFMiniMp3/wiki
 
