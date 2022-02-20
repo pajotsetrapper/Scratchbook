@@ -1,13 +1,17 @@
+/**
+The Magic SoundMachine
 
-/* */
+- curl http://soundmachine.lan/playSound?params=3
+- curl http://soundmachine.lan/changeVolume?params=7 (0-32)
+**/
 
 #define DFPLAY_RX D1
 #define DFPLAY_TX D2
-
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
-// #include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
+#include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 #include <SoftwareSerial.h>
-#include <DFMiniMp3.h>                //DFPlayer mini https://github.com/Makuna/DFMiniMp3/wiki
+#include <DFMiniMp3.h> // https://github.com/Makuna/DFMiniMp3/wiki
+#include <aREST.h> // https://www.arduino.cc/reference/en/libraries/arest/
 
 //Callbacks for DFPlayer events
 class Mp3Notify
@@ -55,33 +59,28 @@ class Mp3Notify
     }
 };
 
+int playSound(String command);
+int changeVolume(String command);
 SoftwareSerial dfPlaySerial(DFPLAY_TX, DFPLAY_RX);
 DFMiniMp3<SoftwareSerial, Mp3Notify> dfplayer(dfPlaySerial);
-
-
-void waitMilliseconds(uint16_t msWait)
-{
-  uint32_t start = millis();
-  
-  while ((millis() - start) < msWait)
-  {
-    // calling mp3.loop() periodically allows for notifications 
-    // to be handled without interrupts
-    dfplayer.loop(); 
-    delay(1);
-  }
-}
+aREST rest = aREST();
+WiFiServer server = WiFiServer(80); //Webserver listening on TCP port 80
 
 int playSound(String command) {  
   int tracknumber = 0;
   tracknumber = command.toInt();
+  Serial.println(command);
+  Serial.print("Request to play track "); Serial.println(tracknumber);
+  dfplayer.stop();
   dfplayer.playMp3FolderTrack(tracknumber);
   return 0;
 }
 
-int changeVolume(String command) {  
+int changeVolume(String command) {
   int volume = 0;
   volume = command.toInt();
+  Serial.println(command);
+  Serial.print("Request to change volume to "); Serial.println(volume);
   if ((volume >=0) and (volume <=32)){
     dfplayer.setVolume(volume);
   }
@@ -105,15 +104,26 @@ void setup(){
       //if you get here you have connected to the WiFi
       Serial.println(WiFi.localIP());
   }
-   
+
+  // REST interface: Give name & ID to the device (ID should be 6 characters long)
+  rest.set_id("111000");
+  rest.set_name((char*)"soundMachine");  
+  rest.function((char*)"playSound", playSound); // register function to REST interface
+  rest.function((char*)"changeVolume", changeVolume); // register function to REST interface
+  server.begin();
   dfplayer.begin();  
-  uint16_t volume = dfplayer.getVolume();
-  Serial.print("volume "); Serial.println(volume);
-  dfplayer.setVolume(26);  
+  dfplayer.setVolume(26);
   dfplayer.playMp3FolderTrack(1);
 }
 
-
-void loop()  {
+void loop() {  
   dfplayer.loop();
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+  while(!client.available()){
+    delay(1);
+  }
+  rest.handle(client);
 }
